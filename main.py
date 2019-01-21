@@ -21,7 +21,7 @@ from models import weights_init_normal
 parser = argparse.ArgumentParser()
 parser.add_argument('--epoch', type=int, default=0, help='starting epoch')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
-parser.add_argument('--batch_size', type=int, default=1, help='size of the batches')
+parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
 parser.add_argument('--root', type=str, default='./data/', help='root directory of the dataset')
 parser.add_argument('--lr', type=float, default=0.0002, help='adam: learning rate')
 parser.add_argument('--b1', type=float, default=0.5, help='adam: decay of first order momentum of gradient')
@@ -35,7 +35,7 @@ parser.add_argument('--checkpoint_interval', type=int, default=-1, help='interva
 parser.add_argument('--n_residual_blocks', type=int, default=9, help='number of residual blocks in generator')
 parser.add_argument('--gpu_id', type=int, default=-1, help='GPU id')
 opt = parser.parse_args()
-cuda = opt.gpu_id > 0
+cuda = opt.gpu_id > -1
 
 # Gs and Ds
 G_AB = GeneratorResNet(res_blocks=opt.n_residual_blocks)
