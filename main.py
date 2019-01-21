@@ -21,7 +21,7 @@ from models import weights_init_normal
 parser = argparse.ArgumentParser()
 parser.add_argument('--epoch', type=int, default=0, help='starting epoch')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
-parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
+parser.add_argument('--batch_size', type=int, default=1, help='size of the batches')
 parser.add_argument('--root', type=str, default='./data/', help='root directory of the dataset')
 parser.add_argument('--lr', type=float, default=0.0002, help='adam: learning rate')
 parser.add_argument('--b1', type=float, default=0.5, help='adam: decay of first order momentum of gradient')
@@ -109,7 +109,6 @@ val_dataloader = DataLoader(ImageDataset("./data/", transforms_=transforms_, mod
 
 
 def sample_images(batches_done):
-    """Saves a generated sample from the test set"""
     imgs = next(iter(val_dataloader))
     real_A = Variable(imgs['A'].type(Tensor))
     fake_B = G_AB(real_A)
@@ -120,6 +119,13 @@ def sample_images(batches_done):
     save_image(img_sample, 'images/%s.png' % (batches_done), nrow=5, normalize=True)
 
 
+def set_requires_grad(nets, requires_grad=False):
+    if not isinstance(nets, list):
+        nets = [nets]
+    for net in nets:
+        if net is not None:
+            for param in net.parameters():
+                param.requires_grad = requires_grad
 # ----------
 #  Training
 # ----------
@@ -143,7 +149,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # ------------------
 
         optimizer_G.zero_grad()
-
+        set_requires_grad([D_A, D_B], False)
         # Identity loss
         loss_id_A = criterion_identity(G_BA(real_A), real_A)
         loss_id_B = criterion_identity(G_AB(real_B), real_B)
@@ -173,6 +179,8 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
         loss_G.backward()
         optimizer_G.step()
+
+        set_requires_grad([D_A, D_B], True)
 
         # -----------------------
         #  Train Discriminator A
