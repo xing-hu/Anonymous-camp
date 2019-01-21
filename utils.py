@@ -16,7 +16,7 @@ class ImageDataset(Dataset):
         self.files_B = glob.glob(os.path.join(root, mode + '_B') + '/*.*')
 
     def __getitem__(self, index):
-        item_A = self.transforms(Image.open(self.files_A[index % len(self.files_A)]))
+        item_A = self.transforms(Image.open(self.files_A[random.randint(0, len(self.files_A) - 1)]))
         item_B = self.transforms(Image.open(self.files_B[random.randint(0, len(self.files_B) - 1)]).convert("RGB"))
         return {'A': item_A, 'B': item_B}
 
