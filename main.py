@@ -34,8 +34,8 @@ parser.add_argument('--sample_interval', type=int, default=100, help='interval b
 parser.add_argument('--checkpoint_interval', type=int, default=-1, help='interval between saving model checkpoints')
 parser.add_argument('--n_residual_blocks', type=int, default=9, help='number of residual blocks in generator')
 parser.add_argument('--gpu_id', type=int, default=-1, help='GPU id')
-parser.add_argument('--model_name', type=str, default='cycleGAN_affine_white', help='model name')
-
+parser.add_argument('--model_name', type=str, default='cycleGAN_white', help='model name')
+parser.add_argument('--rotate_degree', type=int, default=0, help='rotate degree')
 opt = parser.parse_args()
 
 os.makedirs('saved_models/%s' % (opt.model_name))
@@ -103,7 +103,7 @@ fake_B_buffer = ReplayBuffer()
 transforms_ = [transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
                transforms.RandomCrop((opt.img_height, opt.img_width)),
                transforms.RandomHorizontalFlip(),
-               transforms.RandomAffine(degrees=30),
+               transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor= 255),
                transforms.ToTensor(),
                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 
