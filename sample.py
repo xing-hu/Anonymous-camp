@@ -21,7 +21,7 @@ opt = parser.parse_args()
 cuda = opt.gpu_id > -1
 
 # # Load pretrained model G_AB
-G_AB = GeneratorResNet(res_blocks=opt.n_residual_blocks)
+G_AB = GeneratorResNet()
 if cuda:
     G_AB = G_AB.cuda()
 G_AB.load_state_dict(torch.load(opt.check_point))
@@ -35,7 +35,10 @@ transforms_ = [transforms.Resize((opt.img_height, opt.img_width)),
 img_transformer = transforms.Compose(transforms_)
 
 # Test data
-img = img_transformer(Image.open(opt.A_file))
-real_A = Variable(img.type(Tensor))
+
+img = img_transformer(Image.open(opt.A_file).convert("RGB"))
+print(img.shape)
+real_A = Variable(img.reshape(1,3, opt.img_height, opt.img_width).type(Tensor))
+
 img_sample = G_AB(real_A)
 save_image(img_sample, 'images/sampled.png' % (), nrow=5, normalize=True)
