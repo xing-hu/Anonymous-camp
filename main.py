@@ -34,7 +34,13 @@ parser.add_argument('--sample_interval', type=int, default=100, help='interval b
 parser.add_argument('--checkpoint_interval', type=int, default=-1, help='interval between saving model checkpoints')
 parser.add_argument('--n_residual_blocks', type=int, default=9, help='number of residual blocks in generator')
 parser.add_argument('--gpu_id', type=int, default=-1, help='GPU id')
+parser.add_argument('--model_name', type=str, default='cycleGAN_affine_white', help='model name')
+
 opt = parser.parse_args()
+
+os.makedirs('saved_models/%s' % (opt.model_name))
+os.makedirs('images/%s' % (opt.model_name))
+
 cuda = opt.gpu_id > -1
 
 # Gs and Ds
@@ -58,10 +64,10 @@ if cuda:
 
 if opt.epoch != 0:
     # Load pretrained models
-    G_AB.load_state_dict(torch.load('saved_models/G_AB_%d.pth' % (opt.epoch)))
-    G_BA.load_state_dict(torch.load('saved_models/G_BA_%d.pth' % (opt.epoch)))
-    D_A.load_state_dict(torch.load('saved_models/D_A_%d.pth' % (opt.epoch)))
-    D_B.load_state_dict(torch.load('saved_models/D_B_%d.pth' % (opt.epoch)))
+    G_AB.load_state_dict(torch.load('saved_models/%s/G_AB_%d.pth' % (opt.model_name, opt.epoch)))
+    G_BA.load_state_dict(torch.load('saved_models/%s/G_BA_%d.pth' % (opt.model_name, opt.epoch)))
+    D_A.load_state_dict(torch.load('saved_models/%s/D_A_%d.pth' % (opt.model_name, opt.epoch)))
+    D_B.load_state_dict(torch.load('saved_models/%s/D_B_%d.pth' % (opt.model_name, opt.epoch)))
 else:
     # Initialize weights
     G_AB.apply(weights_init_normal)
@@ -97,6 +103,7 @@ fake_B_buffer = ReplayBuffer()
 transforms_ = [transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
                transforms.RandomCrop((opt.img_height, opt.img_width)),
                transforms.RandomHorizontalFlip(),
+               transforms.RandomAffine(degrees=30),
                transforms.ToTensor(),
                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 
@@ -116,16 +123,9 @@ def sample_images(batches_done):
     fake_A = G_BA(real_B)
     img_sample = torch.cat((real_A.data, fake_B.data,
                             real_B.data, fake_A.data), 0)
-    save_image(img_sample, 'images/%s.png' % (batches_done), nrow=5, normalize=True)
+    save_image(img_sample, 'images/%s/%s.png' % (opt.model_name, batches_done), nrow=5, normalize=True)
 
 
-def set_requires_grad(nets, requires_grad=False):
-    if not isinstance(nets, list):
-        nets = [nets]
-    for net in nets:
-        if net is not None:
-            for param in net.parameters():
-                param.requires_grad = requires_grad
 # ----------
 #  Training
 # ----------
@@ -149,7 +149,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # ------------------
 
         optimizer_G.zero_grad()
-        set_requires_grad([D_A, D_B], False)
         # Identity loss
         loss_id_A = criterion_identity(G_BA(real_A), real_A)
         loss_id_B = criterion_identity(G_AB(real_B), real_B)
@@ -180,7 +179,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         loss_G.backward()
         optimizer_G.step()
 
-        set_requires_grad([D_A, D_B], True)
+        # set_requires_grad([D_A, D_B], True)
 
         # -----------------------
         #  Train Discriminator A
@@ -248,7 +247,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
     if opt.checkpoint_interval != -1 and epoch % opt.checkpoint_interval == 0:
         # Save model checkpoints
-        torch.save(G_AB.state_dict(), 'saved_models/G_AB_%d.pth' % (epoch))
-        torch.save(G_BA.state_dict(), 'saved_models/G_BA_%d.pth' % (epoch))
-        torch.save(D_A.state_dict(), 'saved_models/D_A_%d.pth' % (epoch))
-        torch.save(D_B.state_dict(), 'saved_models/D_B_%d.pth' % (epoch))
+        torch.save(G_AB.state_dict(), 'saved_models/%s/G_AB_%d.pth' % (opt.model_name, epoch))
+        torch.save(G_BA.state_dict(), 'saved_models/%s/G_BA_%d.pth' % (opt.model_name, epoch))
+        torch.save(D_A.state_dict(), 'saved_models/%s/D_A_%d.pth' % (opt.model_name, epoch))
+        torch.save(D_B.state_dict(), 'saved_models/%s/D_B_%d.pth' % (opt.model_name, epoch))
