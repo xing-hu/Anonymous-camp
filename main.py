@@ -36,6 +36,7 @@ parser.add_argument('--n_residual_blocks', type=int, default=9, help='number of 
 parser.add_argument('--gpu_id', type=int, default=-1, help='GPU id')
 parser.add_argument('--model_name', type=str, default='cycleGAN_white', help='model name')
 parser.add_argument('--rotate_degree', type=int, default=0, help='rotate degree')
+parser.add_argument('--lambda_id', type=float, default=0.5, help='opt.lambda_id')
 opt = parser.parse_args()
 
 # make output dirs
@@ -78,7 +79,7 @@ else:
 
 # Loss weights
 lambda_cyc = 10
-lambda_id = 0.5 * lambda_cyc
+lambda_id = opt.lambda_id * lambda_cyc
 
 # Optimizers
 optimizer_G = torch.optim.Adam(itertools.chain(G_AB.parameters(), G_BA.parameters()),
@@ -115,21 +116,7 @@ dataloader = DataLoader(ImageDataset("./data/", transforms_=transforms_),
 val_dataloader = DataLoader(ImageDataset("./data/", transforms_=transforms_, mode='test'),
                             batch_size=1)
 
-
-def sample_images(batches_done):
-    imgs = next(iter(val_dataloader))
-    real_A = Variable(imgs['A'].type(Tensor))
-    fake_B = G_AB(real_A)
-    real_B = Variable(imgs['B'].type(Tensor))
-    fake_A = G_BA(real_B)
-    img_sample = torch.cat((real_A.data, fake_B.data,
-                            real_B.data, fake_A.data), 0)
-    save_image(img_sample, 'images/%s/%s.png' % (opt.model_name, batches_done), nrow=5, normalize=True)
-
-
-# ----------
 #  Training
-# ----------
 
 patch = (1, 16, 16)
 prev_time = time.time()
@@ -145,9 +132,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         valid = Variable(Tensor(np.ones((real_A.size(0), *patch))), requires_grad=False)
         fake = Variable(Tensor(np.zeros((real_A.size(0), *patch))), requires_grad=False)
 
-        # ------------------
         #  Train Generators
-        # ------------------
 
         optimizer_G.zero_grad()
         # Identity loss
@@ -180,11 +165,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         loss_G.backward()
         optimizer_G.step()
 
-        # set_requires_grad([D_A, D_B], True)
-
-        # -----------------------
         #  Train Discriminator A
-        # -----------------------
 
         optimizer_D_A.zero_grad()
 
@@ -199,9 +180,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         loss_D_A.backward()
         optimizer_D_A.step()
 
-        # -----------------------
         #  Train Discriminator B
-        # -----------------------
 
         optimizer_D_B.zero_grad()
 
@@ -239,7 +218,15 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
         # If at sample interval save image
         if batches_done % opt.sample_interval == 0:
-            sample_images(batches_done)
+            # Sample a picture
+            imgs = next(iter(val_dataloader))
+            real_A = Variable(imgs['A'].type(Tensor))
+            fake_B = G_AB(real_A)
+            real_B = Variable(imgs['B'].type(Tensor))
+            fake_A = G_BA(real_B)
+            img_sample = torch.cat((real_A.data, fake_B.data,
+                                    real_B.data, fake_A.data), 0)
+            save_image(img_sample, 'images/%s/%s.png' % (opt.model_name, batches_done), nrow=5, normalize=True)
 
     # Update learning rates
     lr_scheduler_G.step()
