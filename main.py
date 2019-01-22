@@ -38,8 +38,9 @@ parser.add_argument('--model_name', type=str, default='cycleGAN_white', help='mo
 parser.add_argument('--rotate_degree', type=int, default=0, help='rotate degree')
 opt = parser.parse_args()
 
-os.makedirs('saved_models/%s' % (opt.model_name))
-os.makedirs('images/%s' % (opt.model_name))
+# make output dirs
+os.makedirs('saved_models/%s' % (opt.model_name), exist_ok=True)
+os.makedirs('images/%s' % (opt.model_name), exist_ok=True)
 
 cuda = opt.gpu_id > -1
 
@@ -103,7 +104,7 @@ fake_B_buffer = ReplayBuffer()
 transforms_ = [transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
                transforms.RandomCrop((opt.img_height, opt.img_width)),
                transforms.RandomHorizontalFlip(),
-               transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor= 255),
+               transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor=(255, 255, 255)),
                transforms.ToTensor(),
                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 
