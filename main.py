@@ -26,8 +26,8 @@ parser.add_argument('--root', type=str, default='./data/', help='root directory 
 parser.add_argument('--lr', type=float, default=0.0002, help='adam: learning rate')
 parser.add_argument('--b1', type=float, default=0.5, help='adam: decay of first order momentum of gradient')
 parser.add_argument('--b2', type=float, default=0.999, help='adam: decay of first order momentum of gradient')
-parser.add_argument('--img_height', type=int, default=256, help='size of image height')
-parser.add_argument('--img_width', type=int, default=256, help='size of image width')
+parser.add_argument('--img_height', type=int, default=218, help='size of image height')
+parser.add_argument('--img_width', type=int, default=178, help='size of image width')
 parser.add_argument('--decay_epoch', type=int, default=100, help='epoch from which to start lr decay')
 parser.add_argument('--crop_size', type=int, default=256, help='size of the data crop (squared assumed)')
 parser.add_argument('--sample_interval', type=int, default=100, help='interval between sampling images from generators')
@@ -102,19 +102,26 @@ fake_A_buffer = ReplayBuffer()
 fake_B_buffer = ReplayBuffer()
 
 # Image transformations
-transforms_ = [transforms.Resize(int(opt.img_height * 1.12), Image.BICUBIC),
-               transforms.RandomCrop((opt.img_height, opt.img_width)),
-               transforms.RandomHorizontalFlip(),
-               transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor=(255, 255, 255)),
-               transforms.ToTensor(),
-               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+A_transforms_ = [transforms.Pad((100, 100), fill=(255, 255, 255)),
+                 transforms.CenterCrop((256, 256)),
+                 transforms.RandomHorizontalFlip(),
+                 transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor=(255, 255, 255)),
+                 transforms.ToTensor(),
+                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 
+B_transforms_ = [transforms.Resize((300, 300)),
+                 transforms.CenterCrop((256, 256)),
+                 transforms.RandomHorizontalFlip(),
+                 transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor=(255, 255, 255)),
+                 transforms.ToTensor(),
+                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 # Training data loader
-dataloader = DataLoader(ImageDataset("./data/", transforms_=transforms_),
+dataloader = DataLoader(ImageDataset("./data/", A_transforms_=A_transforms_, B_transforms_=B_transforms_),
                         batch_size=opt.batch_size, shuffle=True, )
 # Test data loader
-val_dataloader = DataLoader(ImageDataset("./data/", transforms_=transforms_, mode='test'),
-                            batch_size=1)
+val_dataloader = DataLoader(
+    ImageDataset("./data/", A_transforms_=A_transforms_, B_transforms_=B_transforms_, mode='test'),
+    batch_size=1)
 
 #  Training
 

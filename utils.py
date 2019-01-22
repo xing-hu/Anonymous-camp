@@ -9,15 +9,15 @@ import torch
 
 
 class ImageDataset(Dataset):
-    def __init__(self, root, transforms_=None, mode='train'):
-        self.transforms = transforms.Compose(transforms_)
-
+    def __init__(self, root, A_transforms_=None,B_transforms_=None, mode='train'):
+        self.A_transforms = transforms.Compose(A_transforms_)
+        self.B_transforms = transforms.Compose(B_transforms_)
         self.files_A = glob.glob(os.path.join(root, mode + '_A') + '/*.*')
         self.files_B = glob.glob(os.path.join(root, mode + '_B') + '/*.*')
 
     def __getitem__(self, index):
-        item_A = self.transforms(Image.open(self.files_A[random.randint(0, len(self.files_A) - 1)]))
-        item_B = self.transforms(Image.open(self.files_B[random.randint(0, len(self.files_B) - 1)]).convert("RGB"))
+        item_A = self.A_transforms(Image.open(self.files_A[random.randint(0, len(self.files_A) - 1)]))
+        item_B = self.B_transforms(Image.open(self.files_B[random.randint(0, len(self.files_B) - 1)]).convert("RGB"))
         return {'A': item_A, 'B': item_B}
 
     def __len__(self):
