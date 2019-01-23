@@ -108,7 +108,7 @@ class Discriminator(nn.Module):
 
 class LargePatchDiscriminator(nn.Module):
     def __init__(self):
-        super(Discriminator, self).__init__()
+        super(LargePatchDiscriminator, self).__init__()
 
         def discriminator_block(in_filters, out_filters, normalize=True):
             """Returns downsampling layers of each discriminator block"""
