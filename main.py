@@ -102,15 +102,16 @@ fake_A_buffer = ReplayBuffer()
 fake_B_buffer = ReplayBuffer()
 
 # Image transformations
-A_transforms_ = [transforms.Pad((100, 100), fill=(255, 255, 255)),
-                 transforms.CenterCrop((256, 256)),
+A_transforms_ = [transforms.CenterCrop((178,178)),
+                 transforms.Resize((300, 300)),
+                 transforms.RandomCrop((256, 256)),
                  transforms.RandomHorizontalFlip(),
                  transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor=(255, 255, 255)),
                  transforms.ToTensor(),
                  transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 
-B_transforms_ = [transforms.Resize((300, 300)),
-                 transforms.CenterCrop((256, 256)),
+B_transforms_ = [transforms.Resize((360, 360)),
+                 transforms.RandomCrop((256, 256)),
                  transforms.RandomHorizontalFlip(),
                  transforms.RandomAffine(degrees=opt.rotate_degree, fillcolor=(255, 255, 255)),
                  transforms.ToTensor(),
