@@ -38,4 +38,5 @@ img = img_transformer(Image.open(opt.A_file).convert("RGB"))
 real_A = Variable(img.reshape(1, 3, opt.img_height, opt.img_width).type(Tensor))
 
 img_sample = G_AB(real_A)
-save_image(img_sample, 'images/sampled.png' % (), nrow=5, normalize=True)
+model_name = '-'.join(opt.check_point.split('/')[-2:])
+save_image(img_sample, 'images/%s-%s' % (model_name, opt.A_file.split('/')[-1]), nrow=5, normalize=True)
