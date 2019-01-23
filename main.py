@@ -10,12 +10,10 @@ import torchvision.transforms as transforms
 from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
-from torch import Tensor
-from PIL import Image
 import torch
 
 from models import GeneratorResNet
-from models import Discriminator
+from models import Discriminator, LargePatchDiscriminator
 from models import weights_init_normal
 
 parser = argparse.ArgumentParser()
@@ -36,7 +34,8 @@ parser.add_argument('--n_residual_blocks', type=int, default=9, help='number of 
 parser.add_argument('--gpu_id', type=int, default=-1, help='GPU id')
 parser.add_argument('--model_name', type=str, default='cycleGAN_white', help='model name')
 parser.add_argument('--rotate_degree', type=int, default=0, help='rotate degree')
-parser.add_argument('--lambda_id', type=float, default=0.5, help='opt.lambda_id')
+parser.add_argument('--lambda_id', type=float, default=0.5, help='lambda_id')
+parser.add_argument('--large_patch', type=bool, default=False, help='whether use large patch')
 opt = parser.parse_args()
 
 # make output dirs
@@ -48,8 +47,12 @@ cuda = opt.gpu_id > -1
 # Gs and Ds
 G_AB = GeneratorResNet(res_blocks=opt.n_residual_blocks)
 G_BA = GeneratorResNet(res_blocks=opt.n_residual_blocks)
-D_A = Discriminator()
-D_B = Discriminator()
+if opt.large_patch:
+    D_A = LargePatchDiscriminator()
+    D_B = LargePatchDiscriminator()
+else:
+    D_A = Discriminator()
+    D_B = Discriminator()
 
 criterion_GAN = torch.nn.MSELoss()
 criterion_cycle = torch.nn.L1Loss()
@@ -102,7 +105,7 @@ fake_A_buffer = ReplayBuffer()
 fake_B_buffer = ReplayBuffer()
 
 # Image transformations
-A_transforms_ = [transforms.CenterCrop((178,178)),
+A_transforms_ = [transforms.CenterCrop((178, 178)),
                  transforms.Resize((300, 300)),
                  transforms.RandomCrop((256, 256)),
                  transforms.RandomHorizontalFlip(),
@@ -125,8 +128,11 @@ val_dataloader = DataLoader(
     batch_size=1)
 
 #  Training
-
-patch = (1, 16, 16)
+if opt.large_patch:
+    patch = (1, 64, 64)
+else:
+    patch = (1, 16, 16)
+    
 prev_time = time.time()
 for epoch in range(opt.epoch, opt.n_epochs):
     for i, batch in enumerate(dataloader):

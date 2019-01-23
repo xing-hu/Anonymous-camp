@@ -1,12 +1,10 @@
 import argparse
-
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
 from torch.autograd import Variable
 from torch import Tensor
 from PIL import Image
 import torch
-
 from models import GeneratorResNet
 
 parser = argparse.ArgumentParser()
@@ -37,8 +35,7 @@ img_transformer = transforms.Compose(transforms_)
 # Test data
 
 img = img_transformer(Image.open(opt.A_file).convert("RGB"))
-print(img.shape)
-real_A = Variable(img.reshape(1,3, opt.img_height, opt.img_width).type(Tensor))
+real_A = Variable(img.reshape(1, 3, opt.img_height, opt.img_width).type(Tensor))
 
 img_sample = G_AB(real_A)
 save_image(img_sample, 'images/sampled.png' % (), nrow=5, normalize=True)
